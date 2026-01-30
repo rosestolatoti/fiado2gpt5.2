@@ -1,0 +1,244 @@
+ficou excelente, porem minha loja é de AFILIADOS, eu nao cadastro ninguem, nao precisa, eu nao faço vendas do meu site, então nos vamos fazer melhorias, o meu site é linkado com produtos da amazon, shopee e mercado livre, entao, eu pego produtos desses sites, cadastro diariamente, e as pessoas quando entram no site e gostam de algum produto, elas clicam num botao, que redireciona para o link do produto seja em qualquer uma dos 3 marketplace, entao vamos adaptar esse site, e gerar a versao para nosso objetivo, tem uma coisa extremamente importante, eu preciso ter uma pagina admin, que cadastre produtos preenchendo campos, e tb 
+gostaria q essa pagina admin ela pudesse editar partes do site, exemplo, hoje ele tem botao de whastapp, eu queria facilmente trocar o logo ou nome do botao, como gostaria de mudar a foto de fundo do header, gostaria q ele fosse editavel e pratico para cadastrar produtos, e se possivel com possibilidade de colocar videos ou gif onde fica imagem de cada produto e tb q pudesse cadastrar mais de uma foto na divulgacao do produto 
+outra coisa importante botoes das 3 lojas na cor dos markerplace, tipo amazon cinza, mercado livre amarelo, shopee laranja e gostaria abaixo dos produtos q ficasse passando um carrossel com provas scoais elogiando o site para passar mais credibilidade 
+
+MANUAL DO WILLIAM – LOJA DO FIADO (AFILIADOS)
+Versão simples e passo a passo para o Sr. William (70 anos)
+
+============================================================
+1) O QUE ESTE SITE É (EM PALAVRAS SIMPLES)
+============================================================
+- Este site é uma VITRINE DE PRODUTOS.
+- As pessoas entram, veem os produtos e clicam no botão.
+- O botão leva direto para o site da Shopee, Amazon ou Mercado Livre.
+- Aqui NÃO tem compra, NÃO tem pagamento e NÃO precisa cadastro.
+
+Em resumo: é como um catálogo bonito que leva para a loja verdadeira.
+
+============================================================
+2) COMO O VISITANTE USA O SITE (SEM CADASTRO)
+============================================================
+1. Entra no site.
+2. Vê os produtos em destaque.
+3. Clica no botão do produto.
+4. Vai direto para o site da loja (Shopee/Amazon/Mercado Livre).
+
+============================================================
+3) O QUE O SR. WILLIAM VAI FAZER (CADASTRAR PRODUTOS)
+============================================================
+Hoje o site NÃO tem painel de administrador pronto.
+Para alterar os produtos, o cadastro é feito editando um arquivo do site.
+(Se quiser, posso criar depois um painel simples de admin com senha.)
+
+O arquivo principal onde ficam os produtos é:
+client/src/pages/home.tsx
+
+Dentro dele existe uma lista chamada MOCK_PRODUCTS.
+É ali que o Sr. William vai cadastrar, trocar ou remover produtos.
+
+============================================================
+4) PASSO A PASSO NO REPLIT (MUITO SIMPLES)
+============================================================
+1. Abra o Replit do projeto.
+2. No lado esquerdo, procure a pasta:
+   client → src → pages → home.tsx
+3. Clique nesse arquivo.
+4. Procure por “MOCK_PRODUCTS”.
+5. Cada produto é um bloco entre { }.
+6. Para adicionar produto:
+   - Copie um bloco existente.
+   - Cole abaixo.
+   - Troque o título, preço, etc.
+7. Salve o arquivo.
+8. Volte para a aba do site e atualize (F5).
+9. Pronto: o produto aparece.
+
+============================================================
+5) CAMPOS DE CADA PRODUTO (O QUE SIGNIFICA)
+============================================================
+Cada produto tem estes campos:
+
+- id: um código simples (ex: "p9", "p10").
+- title: nome do produto.
+- price: preço atual.
+- oldPrice: preço antigo (opcional).
+- installment: texto de parcelamento (ex: "10x sem juros").
+- rating: nota do produto (ex: 4.7).
+- reviews: quantidade de avaliações (ex: 120).
+- tag: etiqueta (“OFERTA”, “DESTAQUE” ou “FRETE GRÁTIS”).
+- category: categoria (tem que ser uma das que já existem).
+
+Categorias válidas:
+Destaques, Eletrônicos, Casa, Beleza, Moda, Mercado, Infantil, Ferramentas.
+
+============================================================
+6) COMO COLOCAR O LINK DE AFILIADO
+============================================================
+Hoje o botão “Adicionar” NÃO leva para lugar nenhum.
+Para virar link de afiliado, precisamos adicionar um campo novo.
+
+Sugestão simples (para fazer depois):
+- Adicionar a chave "url" em cada produto, por exemplo:
+  url: "https://www.amazon.com.br/seu-link"
+
+Depois trocar o botão para abrir esse link.
+
+Eu posso fazer isso para você. Se quiser, eu altero o código e deixo pronto.
+
+============================================================
+7) COMO TROCAR O NOME E O LOGO
+============================================================
+O nome “LOJA DO FIADO” aparece em:
+- client/src/pages/home.tsx (no topo e no rodapé)
+- client/index.html (metas do site)
+
+Se quiser mudar, basta trocar o texto.
+
+O “logo” hoje são só as letras “L” e “F”.
+Dá para trocar por imagem depois, se desejar.
+
+============================================================
+8) COMO PUBLICAR (DEIXAR NO AR)
+============================================================
+Dentro do Replit:
+- Use a opção Deploy/Publish para colocar o site no ar.
+- O Replit já configura um link público.
+
+============================================================
+9) COMO RODAR NO COMPUTADOR (SE PRECISAR)
+============================================================
+Requer Node.js instalado.
+
+Na pasta do projeto:
+1. npm install
+2. npm run dev
+
+Depois abrir no navegador:
+http://localhost:5000
+
+============================================================
+10) O QUE EU POSSO FAZER PELO SR. WILLIAM (SE QUISER)
+============================================================
+- Criar painel de ADMIN com senha.
+- Botão “Ver na loja” com link de afiliado.
+- Adicionar imagens reais dos produtos.
+- Criar categorias novas.
+- Colocar WhatsApp de contato.
+- Melhorar a página inicial e texto de vendas.
+
+============================================================
+11) MAPA COMPLETO DO PROJETO (CADA PASTA E ARQUIVO)
+============================================================
+PASTA RAIZ
+- .local/ → arquivos internos do Replit (não mexer).
+- client/ → parte visual do site (o que as pessoas veem).
+- server/ → servidor (hoje quase vazio).
+- shared/ → tipos e esquema de banco (ainda não usado).
+- script/build.ts → script de build para produção.
+- .gitignore → ignora arquivos no Git.
+- .replit → configuração do Replit.
+- components.json → configuração da biblioteca de componentes.
+- drizzle.config.ts → config de banco (não usado agora).
+- package.json → scripts e dependências.
+- package-lock.json → trava versões.
+- postcss.config.js → configuração do CSS.
+- tsconfig.json → configuração do TypeScript.
+- vite-plugin-meta-images.ts → ajusta imagens de compartilhamento.
+- vite.config.ts → config do Vite (build do site).
+
+PASTA client/
+- public/favicon.png → ícone do site.
+- public/opengraph.jpg → imagem de compartilhamento.
+- index.html → HTML base do site.
+
+client/src/
+- App.tsx → define as páginas do site.
+- main.tsx → ponto de entrada do React.
+- index.css → cores, fontes e estilo geral.
+- pages/home.tsx → página principal e LISTA DE PRODUTOS.
+- pages/not-found.tsx → página de erro 404.
+
+client/src/components/ui/ (componentes visuais prontos)
+- accordion.tsx → acordeão.
+- alert-dialog.tsx → caixa de confirmação.
+- alert.tsx → alerta simples.
+- aspect-ratio.tsx → área com proporção fixa.
+- avatar.tsx → avatar.
+- badge.tsx → etiqueta.
+- breadcrumb.tsx → trilha de navegação.
+- button-group.tsx → grupo de botões.
+- button.tsx → botão padrão.
+- calendar.tsx → calendário.
+- card.tsx → cartão.
+- carousel.tsx → carrossel.
+- chart.tsx → gráficos.
+- checkbox.tsx → caixa de seleção.
+- collapsible.tsx → bloco que abre/fecha.
+- command.tsx → menu de comandos.
+- context-menu.tsx → menu do botão direito.
+- dialog.tsx → janela modal.
+- drawer.tsx → painel lateral.
+- dropdown-menu.tsx → menu suspenso.
+- empty.tsx → estado vazio.
+- field.tsx → campo de formulário.
+- form.tsx → formulário.
+- hover-card.tsx → cartão ao passar o mouse.
+- input-group.tsx → grupo de campos.
+- input-otp.tsx → campo de código.
+- input.tsx → campo de texto.
+- item.tsx → item genérico.
+- kbd.tsx → tecla de teclado.
+- label.tsx → rótulo.
+- menubar.tsx → barra de menu.
+- navigation-menu.tsx → menu de navegação.
+- pagination.tsx → paginação.
+- popover.tsx → caixa flutuante.
+- progress.tsx → barra de progresso.
+- radio-group.tsx → seleção única.
+- resizable.tsx → área redimensionável.
+- scroll-area.tsx → área com rolagem.
+- select.tsx → seletor.
+- separator.tsx → separador.
+- sheet.tsx → painel lateral tipo folha.
+- sidebar.tsx → barra lateral.
+- skeleton.tsx → esqueleto de carregamento.
+- slider.tsx → controle deslizante.
+- sonner.tsx → notificações.
+- spinner.tsx → carregando.
+- switch.tsx → chave liga/desliga.
+- table.tsx → tabela.
+- tabs.tsx → abas.
+- textarea.tsx → campo de texto grande.
+- toast.tsx → toast.
+- toaster.tsx → gerenciador de toasts.
+- toggle-group.tsx → grupo de alternância.
+- toggle.tsx → alternância.
+- tooltip.tsx → dica ao passar o mouse.
+
+client/src/hooks/
+- use-mobile.tsx → detecta celular.
+- use-toast.ts → controla notificações.
+
+client/src/lib/
+- queryClient.ts → base para requisições (não usado agora).
+- utils.ts → funções de ajuda.
+
+PASTA server/
+- index.ts → inicia servidor.
+- routes.ts → rotas da API (vazio hoje).
+- static.ts → serve arquivos estáticos.
+- storage.ts → memória de usuários (não usado).
+- vite.ts → integra Vite no servidor.
+
+PASTA shared/
+- schema.ts → esquema de usuários (não usado agora).
+
+============================================================
+12) RESUMO FINAL
+============================================================
+- O site já está bonito e pronto para mostrar produtos.
+- Para mudar produtos, edite a lista em home.tsx.
+- Hoje não existe painel de admin; posso criar se quiser.
+- O botão pode virar link de afiliado com uma pequena alteração.
+
+FIM DO MANUAL

@@ -1,35 +1,23 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
-  BadgePercent,
   ChevronRight,
-  Flame,
-  Heart,
+  Loader2,
   Menu,
   Search,
   ShieldCheck,
   ShoppingBag,
-  ShoppingCart,
   Sparkles,
-  Star,
-  Tag,
   Truck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { ProductCard } from "@/components/ProductCard";
+import { SocialProofCarousel } from "@/components/SocialProofCarousel";
+import type { Product } from "@/types/affiliate";
 
-type Product = {
-  id: string;
-  title: string;
-  price: number;
-  oldPrice?: number;
-  installment?: string;
-  rating: number;
-  reviews: number;
-  tag?: "OFERTA" | "DESTAQUE" | "FRETE GRÁTIS";
-  category: string;
-};
+// Tipo Product importado de @/types/affiliate
 
 const CATEGORIES = [
   "Destaques",
@@ -42,10 +30,11 @@ const CATEGORIES = [
   "Ferramentas",
 ];
 
+// Produtos serão carregados da API
 const MOCK_PRODUCTS: Product[] = [
   {
     id: "p1",
-    title: "Smart TV 50\" 4K UHD",
+    title: "Smart TV 50\" 4K UHD Samsung",
     price: 2199.9,
     oldPrice: 2699.9,
     installment: "10x sem juros",
@@ -53,10 +42,22 @@ const MOCK_PRODUCTS: Product[] = [
     reviews: 1284,
     tag: "OFERTA",
     category: "Eletrônicos",
+    marketplace: "amazon",
+    affiliateUrl: "https://www.amazon.com.br/dp/B08N5KWB9H?tag=fiado20",
+    images: [
+      "https://images.unsplash.com/photo-1598327105666-5b31ae5c5c6f?w=400",
+      "https://images.unsplash.com/photo-1598327105666-5b31ae5c5c6f?w=400&h=300",
+    ],
+    thumbnail: "https://images.unsplash.com/photo-1598327105666-5b31ae5c5c6f?w=400",
+    availability: "available",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    featured: true,
+    slug: "smart-tv-50-4k-uhd-samsung"
   },
   {
     id: "p2",
-    title: "Air Fryer 5L Inox",
+    title: "Air Fryer 5L Inox Philips",
     price: 399.9,
     oldPrice: 549.9,
     installment: "6x sem juros",
@@ -64,10 +65,21 @@ const MOCK_PRODUCTS: Product[] = [
     reviews: 2351,
     tag: "DESTAQUE",
     category: "Casa",
+    marketplace: "mercadoLivre",
+    affiliateUrl: "https://produto.mercadolivre.com.br/MLB123456790",
+    images: [
+      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400"
+    ],
+    thumbnail: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400",
+    availability: "available",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    featured: false,
+    slug: "air-fryer-5l-inox-philips"
   },
   {
     id: "p3",
-    title: "Kit Skincare Vitamina C",
+    title: "Kit Skincare Vitamina C L'Oréal",
     price: 129.9,
     oldPrice: 189.9,
     installment: "3x sem juros",
@@ -75,10 +87,21 @@ const MOCK_PRODUCTS: Product[] = [
     reviews: 842,
     tag: "OFERTA",
     category: "Beleza",
+    marketplace: "shopee",
+    affiliateUrl: "https://shopee.com.br/product/123456791",
+    images: [
+      "https://images.unsplash.com/photo-1570172619644-dfd05ed296d8?w=400"
+    ],
+    thumbnail: "https://images.unsplash.com/photo-1570172619644-dfd05ed296d8?w=400",
+    availability: "available",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    featured: false,
+    slug: "kit-skincare-vitamina-c-loreal"
   },
   {
     id: "p4",
-    title: "Tênis Casual Premium",
+    title: "Tênis Casual Premium Nike",
     price: 179.9,
     oldPrice: 239.9,
     installment: "5x sem juros",
@@ -86,10 +109,21 @@ const MOCK_PRODUCTS: Product[] = [
     reviews: 512,
     tag: "DESTAQUE",
     category: "Moda",
+    marketplace: "amazon",
+    affiliateUrl: "https://www.amazon.com.br/dp/B07XJ8C8F5?tag=fiado20",
+    images: [
+      "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400"
+    ],
+    thumbnail: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400",
+    availability: "available",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    featured: false,
+    slug: "tenis-casual-premium-nike"
   },
   {
     id: "p5",
-    title: "Cesta Mercado (itens selecionados)",
+    title: "Cesta Mercado Premium",
     price: 89.9,
     oldPrice: 119.9,
     installment: "à vista",
@@ -97,10 +131,21 @@ const MOCK_PRODUCTS: Product[] = [
     reviews: 291,
     tag: "FRETE GRÁTIS",
     category: "Mercado",
+    marketplace: "mercadoLivre",
+    affiliateUrl: "https://produto.mercadolivre.com.br/MLB123456792",
+    images: [
+      "https://images.unsplash.com/photo-1607623814075-e51dfc24e5c9?w=400"
+    ],
+    thumbnail: "https://images.unsplash.com/photo-1607623814075-e51dfc24e5c9?w=400",
+    availability: "available",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    featured: false,
+    slug: "cesta-mercado-premium"
   },
   {
     id: "p6",
-    title: "Furadeira + Maleta 500W",
+    title: "Furadeira + Maleta 500W Bosch",
     price: 249.9,
     oldPrice: 329.9,
     installment: "8x sem juros",
@@ -108,6 +153,17 @@ const MOCK_PRODUCTS: Product[] = [
     reviews: 977,
     tag: "OFERTA",
     category: "Ferramentas",
+    marketplace: "shopee",
+    affiliateUrl: "https://shopee.com.br/product/123456793",
+    images: [
+      "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400"
+    ],
+    thumbnail: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400",
+    availability: "available",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    featured: false,
+    slug: "furadeira-maleta-500w-bosch"
   },
   {
     id: "p7",
@@ -119,10 +175,21 @@ const MOCK_PRODUCTS: Product[] = [
     reviews: 613,
     tag: "DESTAQUE",
     category: "Casa",
+    marketplace: "shopee",
+    affiliateUrl: "https://shopee.com.br/product/123456794",
+    images: [
+      "https://images.unsplash.com/photo-1522741736868-69c7a2fb9b2c?w=400"
+    ],
+    thumbnail: "https://images.unsplash.com/photo-1522741736868-69c7a2fb9b2c?w=400",
+    availability: "available",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    featured: false,
+    slug: "jogo-de-cama-queen-4-pecas"
   },
   {
     id: "p8",
-    title: "Fone Bluetooth ANC",
+    title: "Fone Bluetooth ANC Sony",
     price: 299.9,
     oldPrice: 399.9,
     installment: "10x sem juros",
@@ -130,6 +197,18 @@ const MOCK_PRODUCTS: Product[] = [
     reviews: 1402,
     tag: "OFERTA",
     category: "Eletrônicos",
+    marketplace: "amazon",
+    affiliateUrl: "https://www.amazon.com.br/dp/B07QKJZ1L9?tag=fiado20",
+    images: [
+      "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400"
+    ],
+    thumbnail: "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400",
+    video: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    availability: "available",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    featured: true,
+    slug: "fone-bluetooth-anc-sony"
   },
 ];
 
@@ -191,7 +270,7 @@ function PromoStrip() {
           >
             <Sparkles className="size-4 text-[hsl(var(--accent))]" />
             <span className="font-medium">Semana do Fiado:</span>
-            <span className="opacity-90">descontos selecionados + frete especial</span>
+            <span className="opacity-90">comparamos preços para você economizar</span>
           </div>
           <div className="hidden items-center gap-2 text-xs md:flex">
             <span className="inline-flex items-center gap-2 opacity-90" data-testid="text-trust-1">
@@ -249,133 +328,65 @@ function CategoryPills({
   );
 }
 
-function ProductCard({ product }: { product: Product }) {
-  const pct = discountPercent(product.price, product.oldPrice);
-
-  return (
-    <div
-      className="group relative overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft"
-      data-testid={`card-product-${product.id}`}
-    >
-      <div className="relative">
-        <div
-          className="aspect-[4/3] w-full bg-gradient-to-br from-[hsl(var(--secondary))] via-[hsl(var(--background))] to-[hsl(var(--secondary))]"
-          data-testid={`img-product-${product.id}`}
-        />
-
-        <div className="absolute left-3 top-3 flex items-center gap-2">
-          {product.tag ? (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold tracking-wide",
-                product.tag === "FRETE GRÁTIS"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]",
-              )}
-              data-testid={`badge-tag-${product.id}`}
-            >
-              {product.tag === "OFERTA" ? (
-                <Flame className="size-3" aria-hidden="true" />
-              ) : product.tag === "DESTAQUE" ? (
-                <Star className="size-3" aria-hidden="true" />
-              ) : (
-                <Truck className="size-3" aria-hidden="true" />
-              )}
-              {product.tag}
-            </span>
-          ) : null}
-
-          {pct ? (
-            <span
-              className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--accent))] px-2 py-1 text-[11px] font-semibold text-[hsl(var(--accent-foreground))]"
-              data-testid={`badge-discount-${product.id}`}
-            >
-              <BadgePercent className="size-3" aria-hidden="true" />
-              -{pct}%
-            </span>
-          ) : null}
-        </div>
-
-        <button
-          type="button"
-          className="absolute right-3 top-3 grid size-9 place-items-center rounded-full border bg-card/80 backdrop-blur-sm transition hover:bg-card"
-          data-testid={`button-favorite-${product.id}`}
-          aria-label="Favoritar"
-        >
-          <Heart className="size-4" />
-        </button>
-      </div>
-
-      <div className="space-y-3 p-4">
-        <div className="space-y-1">
-          <div
-            className="line-clamp-2 text-sm font-medium text-foreground"
-            data-testid={`text-title-${product.id}`}
-          >
-            {product.title}
-          </div>
-          <div className="flex items-baseline gap-2">
-            <div
-              className="font-serif text-xl font-semibold tracking-tight"
-              data-testid={`text-price-${product.id}`}
-            >
-              {formatBRL(product.price)}
-            </div>
-            {product.oldPrice ? (
-              <div
-                className="text-xs text-muted-foreground line-through"
-                data-testid={`text-oldprice-${product.id}`}
-              >
-                {formatBRL(product.oldPrice)}
-              </div>
-            ) : null}
-          </div>
-          <div
-            className="text-xs text-muted-foreground"
-            data-testid={`text-installment-${product.id}`}
-          >
-            {product.installment}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-3">
-          <div
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-            data-testid={`text-rating-${product.id}`}
-          >
-            <Star className="size-4 fill-[hsl(var(--accent))] text-[hsl(var(--accent))]" />
-            <span className="font-medium text-foreground">{product.rating.toFixed(1)}</span>
-            <span>({product.reviews})</span>
-          </div>
-
-          <Button
-            size="sm"
-            className="rounded-full"
-            data-testid={`button-addcart-${product.id}`}
-          >
-            <ShoppingCart className="size-4" />
-            <span>Adicionar</span>
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// ProductCard importado do componente separado
 
 export default function Home() {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("Destaques");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [whatsappGroupUrl, setWhatsappGroupUrl] = useState("https://chat.whatsapp.com/SEUGRUPOAQUI");
 
-  const products = useMemo(() => {
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/products?limit=100');
+        const data = await response.json();
+        
+        if (data.success) {
+          setProducts(data.data.products);
+        } else {
+          setError("Erro ao carregar produtos");
+        }
+      } catch (err) {
+        setError("Erro ao carregar produtos");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch("/api/settings");
+        const data = await response.json();
+        if (data.success && data.data?.whatsappGroupUrl) {
+          setWhatsappGroupUrl(data.data.whatsappGroupUrl);
+        }
+      } catch {
+        return;
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  const filteredProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
 
     const base = activeCategory === "Destaques"
-      ? MOCK_PRODUCTS
-      : MOCK_PRODUCTS.filter((p) => p.category === activeCategory);
+      ? products
+      : products.filter((p) => p.category === activeCategory);
 
     if (!normalized) return base;
     return base.filter((p) => p.title.toLowerCase().includes(normalized));
-  }, [query, activeCategory]);
+  }, [query, activeCategory, products]);
 
   return (
     <div className="min-h-dvh bg-background grain">
@@ -412,21 +423,12 @@ export default function Home() {
 
             <div className="flex items-center gap-2">
               <Button
-                variant="secondary"
-                className="hidden rounded-full md:inline-flex"
-                data-testid="button-deals"
-              >
-                <Tag className="size-4" />
-                Ver ofertas
-              </Button>
-
-              <Button
-                variant="outline"
-                className="rounded-full"
-                data-testid="button-cart"
+                className="rounded-full bg-green-500 hover:bg-green-600 text-white"
+                data-testid="button-whatsapp-group"
+                onClick={() => window.open(whatsappGroupUrl, "_blank")}
               >
                 <ShoppingBag className="size-4" />
-                Carrinho
+                Entrar no grupo WhatsApp
               </Button>
             </div>
           </div>
@@ -450,128 +452,16 @@ export default function Home() {
       </header>
 
       <main className="container-shell relative z-10">
-        <section className="py-8 md:py-10">
-          <div className="grid items-end gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="space-y-4">
-              <div
-                className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs text-muted-foreground"
-                data-testid="badge-hero"
-              >
-                <Sparkles className="size-4 text-[hsl(var(--accent))]" />
-                Layout estilo ofertas (moderno)
-              </div>
-              <h1
-                className="text-balance font-serif text-4xl font-semibold tracking-tight md:text-5xl"
-                data-testid="text-hero-title"
-              >
-                Ofertas inteligentes da <span className="text-[hsl(var(--primary))]">LOJA DO FIADO</span>
-              </h1>
-              <p
-                className="max-w-[52ch] text-pretty text-base text-muted-foreground md:text-lg"
-                data-testid="text-hero-subtitle"
-              >
-                Um layout inspirado em sites de oferta: categorias em destaque, grid de produtos
-                com cards ricos e ações rápidas.
-              </p>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <Button className="rounded-full" data-testid="button-hero-shop">
-                  <ShoppingCart className="size-4" />
-                  Comprar agora
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="rounded-full"
-                  data-testid="button-hero-whatsapp"
-                >
-                  Falar no WhatsApp
-                  <ChevronRight className="size-4" />
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3 pt-2 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-2" data-testid="text-hero-trust-1">
-                  <ShieldCheck className="size-4 text-[hsl(var(--accent))]" />
-                  Pagamento facilitado
-                </span>
-                <span className="inline-flex items-center gap-2" data-testid="text-hero-trust-2">
-                  <Truck className="size-4 text-[hsl(var(--accent))]" />
-                  Entrega para sua região
-                </span>
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute -inset-4 rounded-[28px] bg-[radial-gradient(ellipse_at_top,rgba(250,204,21,0.25),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(136,19,55,0.22),transparent_65%)] blur-xl" />
-              <div
-                className="relative overflow-hidden rounded-[28px] border bg-card shadow-soft"
-                data-testid="card-hero"
-              >
-                <div className="p-5 md:p-6">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold" data-testid="text-hero-card-title">
-                        Destaques de hoje
-                      </div>
-                      <div className="text-xs text-muted-foreground" data-testid="text-hero-card-subtitle">
-                        Seleção com preço bom e giro rápido
-                      </div>
-                    </div>
-                    <Button variant="outline" className="rounded-full" data-testid="button-hero-card-more">
-                      Ver tudo
-                      <ChevronRight className="size-4" />
-                    </Button>
-                  </div>
-
-                  <div className="mt-5 grid gap-3">
-                    {MOCK_PRODUCTS.slice(0, 3).map((p) => (
-                      <div
-                        key={p.id}
-                        className="flex items-center gap-3 rounded-2xl border bg-[hsl(var(--background))] p-3"
-                        data-testid={`row-featured-${p.id}`}
-                      >
-                        <div className="size-12 rounded-xl bg-gradient-to-br from-[hsl(var(--secondary))] to-[hsl(var(--muted))]" />
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium" data-testid={`text-featured-title-${p.id}`}>
-                            {p.title}
-                          </div>
-                          <div className="text-xs text-muted-foreground" data-testid={`text-featured-price-${p.id}`}>
-                            {formatBRL(p.price)} • {p.installment}
-                          </div>
-                        </div>
-                        <Button size="sm" className="rounded-full" data-testid={`button-featured-add-${p.id}`}>
-                          <ShoppingCart className="size-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-5 grid grid-cols-3 gap-2">
-                    {["Ofertas", "Top", "Frete"].map((label) => (
-                      <div
-                        key={label}
-                        className="rounded-2xl border bg-card p-3 text-center"
-                        data-testid={`card-kpi-${label}`}
-                      >
-                        <div className="text-xs text-muted-foreground">{label}</div>
-                        <div className="font-serif text-lg font-semibold text-[hsl(var(--primary))]">+{label === "Top" ? "120" : label === "Frete" ? "35" : "58"}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         <section className="pb-12 md:pb-16">
           <div className="flex items-end justify-between gap-4">
             <div>
               <h2 className="font-serif text-2xl font-semibold tracking-tight" data-testid="text-section-title">
-                Produtos em destaque
+                Ofertas comparadas para você
               </h2>
               <p className="text-sm text-muted-foreground" data-testid="text-section-subtitle">
-                Grid com cards, preços e ações rápidas (modelo para sua loja)
+                Preços da Amazon, Shopee e Mercado Livre em um só lugar
               </p>
             </div>
             <Button variant="outline" className="rounded-full" data-testid="button-section-more">
@@ -580,28 +470,56 @@ export default function Home() {
             </Button>
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="grid-products">
-            {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-
-          {products.length === 0 ? (
+          {loading ? (
+            <div className="mt-6 flex items-center justify-center py-12">
+              <Loader2 className="size-8 animate-spin text-primary" />
+            </div>
+          ) : error ? (
             <div
               className="mt-6 rounded-2xl border bg-card p-6 text-center"
-              data-testid="empty-products"
+              data-testid="error-products"
             >
-              <div className="mx-auto inline-flex size-12 items-center justify-center rounded-2xl bg-[hsl(var(--secondary))]">
-                <Search className="size-5 text-muted-foreground" />
+              <div className="mx-auto inline-flex size-12 items-center justify-center rounded-2xl bg-destructive/10">
+                <Search className="size-5 text-destructive" />
               </div>
-              <div className="mt-3 font-medium" data-testid="text-empty-title">
-                Nenhum produto encontrado
+              <div className="mt-3 font-medium" data-testid="text-error-title">
+                Erro ao carregar produtos
               </div>
-              <div className="mt-1 text-sm text-muted-foreground" data-testid="text-empty-subtitle">
-                Tente outra busca ou escolha outra categoria.
+              <div className="mt-1 text-sm text-muted-foreground" data-testid="text-error-subtitle">
+                {error}
               </div>
             </div>
-          ) : null}
+          ) : (
+            <>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="grid-products">
+                {filteredProducts.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+
+              {filteredProducts.length === 0 ? (
+                <div
+                  className="mt-6 rounded-2xl border bg-card p-6 text-center"
+                  data-testid="empty-products"
+                >
+                  <div className="mx-auto inline-flex size-12 items-center justify-center rounded-2xl bg-[hsl(var(--secondary))]">
+                    <Search className="size-5 text-muted-foreground" />
+                  </div>
+                  <div className="mt-3 font-medium" data-testid="text-empty-title">
+                    Nenhum produto encontrado
+                  </div>
+                  <div className="mt-1 text-sm text-muted-foreground" data-testid="text-empty-subtitle">
+                    Tente outra busca ou escolha outra categoria.
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
+        </section>
+
+        {/* Seção de Prova Social */}
+        <section className="pb-12 md:pb-16">
+          <SocialProofCarousel />
         </section>
 
         <footer className="border-t py-10">
