@@ -1,0 +1,23 @@
+10 passos para colocar o site no ar (Supabase + Vercel + GitHub)
+1) Confirmar variáveis de ambiente no Supabase e no projeto (.env): DATABASE_URL, JWT_SECRET, PORT.
+2) Criar conta na Vercel e conectar o repositório do GitHub.
+3) Configurar o build na Vercel: comando npm run build e output dist/public.
+4) Configurar o start na Vercel para o servidor: npm run start com NODE_ENV=production.
+5) Criar projeto no Supabase com Postgres e liberar IP/URL da Vercel.
+6) Rodar migrations (npm run db:push) e validar tabelas products e site_settings.
+7) Definir credenciais do admin (email/senha) e guardar de forma segura.
+8) Implementar recuperação de senha do admin via email (endpoint + token temporário).
+9) Ativar cache/CDN gratuito na Vercel e compressão para melhorar velocidade.
+10) Comprar domínio barato (.com.br) e apontar DNS para a Vercel.
+
+10 opções para automatizar ainda mais o site (gratuitas ou baratas)
+1) Importar produtos por planilha CSV com atualização programada.
+2) Integração com planilhas Google via Apps Script para sync automático.
+3) Agendar despublicação automática por data de validade da oferta.
+4) Geração automática de slug e tags com base no título.
+5) Monitorar links de afiliado quebrados com checagem diária gratuita.
+6) Capturar cliques por marketplace e gerar relatório simples semanal.
+7) Atualizar preços em lote por regra (ex.: +5% em categoria X).
+8) Priorizar produtos com maior conversão usando métricas de cliques.
+9) Criar regras de destaque automático para ofertas com maior desconto.
+10) Enviar alertas no WhatsApp quando um produto é publicado.

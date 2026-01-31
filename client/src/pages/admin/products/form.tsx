@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, Save, Eye, EyeOff, Upload, X, Plus } from "lucide-react";
+import { ArrowLeft, Save, Eye, EyeOff, Trash2, XCircle, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,19 +9,35 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ImageUpload } from "@/components/ImageUpload";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { Product, ProductFormData, Marketplace, AvailabilityStatus } from "@/types/affiliate";
 
 const CATEGORIES = [
   "Destaques",
-  "Eletrônicos", 
+  "Cozinha",
   "Casa",
+  "Decoração",
+  "Limpeza",
+  "Eletrônicos",
+  "Celulares",
+  "Acessórios",
+  "Áudio",
+  "Informática",
+  "Moda Feminina",
+  "Moda Masculina",
   "Beleza",
-  "Moda",
+  "Saúde",
   "Mercado",
   "Infantil",
-  "Ferramentas"
+  "Ferramentas",
+  "Pets",
+  "Automotivo",
+  "Esporte",
+  "Jardim",
+  "Outros",
 ];
 
 export default function ProductForm() {
@@ -34,6 +50,9 @@ export default function ProductForm() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [duplicateMatches, setDuplicateMatches] = useState<Product[]>([]);
+  const [duplicateLoading, setDuplicateLoading] = useState(false);
+  const [selectedSuggestionIds, setSelectedSuggestionIds] = useState<string[]>([]);
   
   const [formData, setFormData] = useState<ProductFormData>({
     title: "",
@@ -56,10 +75,20 @@ export default function ProductForm() {
     video: ""
   });
 
-  // Estado temporário para gerenciar especificações como array
-  const [specsList, setSpecsList] = useState<Array<{ key: string; value: string }>>([]);
-
   const [showAffiliateUrl, setShowAffiliateUrl] = useState(false);
+
+  const normalizeTitle = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+
+  const notifyProductsUpdated = () => {
+    localStorage.setItem("products_updated_at", Date.now().toString());
+    window.dispatchEvent(new Event("products-updated"));
+  };
 
   useEffect(() => {
     if (isEditing) {
@@ -68,23 +97,50 @@ export default function ProductForm() {
     }
   }, [id, isEditing]);
 
+  const loadSuggestions = async () => {
+    try {
+      setSuggestionsLoading(true);
+      const response = await fetch("/api/products?limit=200&sortBy=created_desc", { cache: "no-store" });
+      const data = await response.json();
+      if (data.success) {
+        setSuggestions(data.data.products || []);
+      }
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isEditing) return;
-    const loadSuggestions = async () => {
+    void loadSuggestions();
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (isEditing) return;
+    const title = formData.title.trim();
+    if (!title) {
+      setDuplicateMatches([]);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
       try {
-        setSuggestionsLoading(true);
-        const response = await fetch("/api/products?limit=8&sortBy=created_desc");
+        setDuplicateLoading(true);
+        const response = await fetch(`/api/products?search=${encodeURIComponent(title)}&limit=5&sortBy=created_desc`, { cache: "no-store" });
         const data = await response.json();
         if (data.success) {
-          setSuggestions(data.data.products || []);
+          const matches = (data.data.products || []).filter((product: Product) =>
+            normalizeTitle(product.title) === normalizeTitle(title)
+          );
+          setDuplicateMatches(matches);
         }
       } finally {
-        setSuggestionsLoading(false);
+        setDuplicateLoading(false);
       }
-    };
+    }, 300);
 
-    loadSuggestions();
-  }, [isEditing]);
+    return () => clearTimeout(timeout);
+  }, [formData.title, isEditing]);
 
   const loadProduct = async (productId: string) => {
     try {
@@ -110,7 +166,7 @@ export default function ProductForm() {
           affiliateUrl: product.affiliateUrl,
           availability: product.availability,
           featured: product.featured,
-          images: [], // Não carregamos files do backend
+          images: product.images || [],
           video: product.video || ""
         });
       } else {
@@ -130,6 +186,7 @@ export default function ProductForm() {
       const payload = {
         ...formData,
         thumbnail: formData.images[0] || "", // Primeira imagem como thumbnail
+        published: false,
       };
 
       let response;
@@ -156,6 +213,7 @@ export default function ProductForm() {
       const data = await response.json();
 
       if (data.success) {
+      notifyProductsUpdated();
         setLoc("/admin");
       } else {
         setError(data.error || "Erro ao salvar produto");
@@ -165,6 +223,62 @@ export default function ProductForm() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRemoveFromSite = async () => {
+    if (!id) return;
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/products/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+        },
+        body: JSON.stringify({ published: false })
+      });
+      const data = await response.json();
+      if (data.success) {
+      notifyProductsUpdated();
+        setLoc("/admin");
+      } else {
+        setError(data.error || "Erro ao remover do site");
+      }
+    } catch {
+      setError("Erro ao remover do site");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteFromDatabase = async () => {
+    if (!id) return;
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/products/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+      notifyProductsUpdated();
+        setLoc("/admin");
+      } else {
+        setError(data.error || "Erro ao excluir do banco");
+      }
+    } catch {
+      setError("Erro ao excluir do banco");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteBoth = async () => {
+    await handleDeleteFromDatabase();
   };
 
   const handleInputChange = (field: keyof ProductFormData, value: any) => {
@@ -201,53 +315,90 @@ export default function ProductForm() {
       video: product.video || ""
     });
 
-    const specsArray = Object.entries(product.specifications || {}).map(([key, value]) => ({
-      key,
-      value
-    }));
-    setSpecsList(specsArray);
   };
 
-  // Converter objeto de specs para array quando carregar produto
-  useEffect(() => {
-    if (formData.specifications) {
-      const specsArray = Object.entries(formData.specifications).map(([key, value]) => ({
-        key,
-        value
-      }));
-      setSpecsList(specsArray);
-    }
-  }, []);
+  const getAuthHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+  });
 
-  // Atualizar formData.specifications quando specsList mudar
-  useEffect(() => {
-    const specsObj = specsList.reduce((acc, { key, value }) => {
-      if (key.trim()) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as Record<string, string>);
-    
-    setFormData(prev => ({
-      ...prev,
-      specifications: specsObj
-    }));
-  }, [specsList]);
-
-  const addSpecification = () => {
-    setSpecsList(prev => [...prev, { key: "", value: "" }]);
-  };
-
-  const updateSpecification = (index: number, field: 'key' | 'value', newValue: string) => {
-    setSpecsList(prev => {
-      const newList = [...prev];
-      newList[index] = { ...newList[index], [field]: newValue };
-      return newList;
+  const handleSuggestionPublish = async (productId: string, published: boolean) => {
+    const response = await fetch(`/api/products/${productId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ published }),
     });
+    const data = await response.json();
+    if (data.success) {
+      notifyProductsUpdated();
+      await loadSuggestions();
+    }
   };
 
-  const removeSpecification = (index: number) => {
-    setSpecsList(prev => prev.filter((_, i) => i !== index));
+  const handleSuggestionDelete = async (productId: string) => {
+    const response = await fetch(`/api/products/${productId}`, {
+      method: "DELETE",
+      headers: {
+        ...getAuthHeaders(),
+      },
+    });
+    const data = await response.json();
+    if (data.success) {
+      setSelectedSuggestionIds((prev) => prev.filter((id) => id !== productId));
+      notifyProductsUpdated();
+      await loadSuggestions();
+    }
+  };
+
+  const handleBulkPublishSuggestions = async () => {
+    if (selectedSuggestionIds.length === 0) return;
+    await Promise.all(
+      selectedSuggestionIds.map((id) =>
+        fetch(`/api/products/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({ published: true }),
+        })
+      )
+    );
+    setSelectedSuggestionIds([]);
+    notifyProductsUpdated();
+    await loadSuggestions();
+  };
+
+  const handleToggleSuggestion = (productId: string, checked: boolean) => {
+    setSelectedSuggestionIds((prev) =>
+      checked ? [...prev, productId] : prev.filter((id) => id !== productId)
+    );
+  };
+
+  const handleToggleAllSuggestions = (checked: boolean) => {
+    if (checked) {
+      setSelectedSuggestionIds(suggestions.map((product) => product.id));
+      return;
+    }
+    setSelectedSuggestionIds([]);
+  };
+
+  const allSuggestionsSelected = selectedSuggestionIds.length > 0 && selectedSuggestionIds.length === suggestions.length;
+  const someSuggestionsSelected = selectedSuggestionIds.length > 0 && selectedSuggestionIds.length < suggestions.length;
+
+  const formatBRL = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  const marketplaceLabel: Record<Marketplace, string> = {
+    amazon: "Amazon",
+    shopee: "Shopee",
+    mercadoLivre: "Mercado Livre",
+  };
+
+  const formatDate = (value?: string | Date | null) => {
+    if (!value) return "";
+    return new Date(value).toLocaleDateString("pt-BR");
   };
 
   return (
@@ -314,26 +465,20 @@ export default function ProductForm() {
                   </div>
                 </div>
 
-                {!isEditing && (
-                  <div className="space-y-2">
-                    <Label>Sugestões de produtos já cadastrados</Label>
-                    {suggestionsLoading ? (
-                      <div className="text-sm text-muted-foreground">Carregando sugestões...</div>
-                    ) : suggestions.length > 0 ? (
-                      <div className="space-y-2">
-                        {suggestions.map((product) => (
-                          <div key={product.id} className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
-                            <div className="text-sm line-clamp-1">{product.title}</div>
-                            <Button type="button" variant="outline" size="sm" onClick={() => applySuggestion(product)}>
-                              Usar
-                            </Button>
-                          </div>
-                        ))}
+                {!isEditing && duplicateMatches.length > 0 && (
+                  <Alert>
+                    <AlertDescription>
+                      Já existe um produto com o mesmo título no banco.
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button type="button" size="sm" variant="outline" onClick={() => applySuggestion(duplicateMatches[0])}>
+                          Usar existente
+                        </Button>
+                        <Button type="button" size="sm" onClick={() => setDuplicateMatches([])}>
+                          Adicionar como novo
+                        </Button>
                       </div>
-                    ) : (
-                      <div className="text-sm text-muted-foreground">Nenhuma sugestão disponível</div>
-                    )}
-                  </div>
+                    </AlertDescription>
+                  </Alert>
                 )}
 
                 <div className="space-y-2">
@@ -592,56 +737,180 @@ export default function ProductForm() {
               </CardContent>
             </Card>
 
-            {/* Especificações */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Especificações Técnicas</CardTitle>
-                  <Button type="button" variant="outline" size="sm" onClick={addSpecification}>
-                    <Plus className="size-4 mr-2" />
-                    Adicionar Especificação
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {specsList.map((spec, index) => (
-                    <div key={index} className="flex gap-3 items-center">
-                      <Input
-                        placeholder="Nome da especificação (ex: Tamanho)"
-                        value={spec.key}
-                        onChange={(e) => updateSpecification(index, 'key', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        placeholder="Valor (ex: 50 polegadas)"
-                        value={spec.value}
-                        onChange={(e) => updateSpecification(index, 'value', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeSpecification(index)}
-                      >
-                        <X className="size-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  
-                  {specsList.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Nenhuma especificação adicionada
-                    </div>
+            {!isEditing && (
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Produtos já cadastrados no banco</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {suggestionsLoading || duplicateLoading ? (
+                    <div className="text-sm text-muted-foreground">Carregando produtos...</div>
+                  ) : suggestions.length > 0 ? (
+                    <>
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-10">
+                                <Checkbox
+                                  checked={allSuggestionsSelected ? true : someSuggestionsSelected ? "indeterminate" : false}
+                                  onCheckedChange={(checked) => handleToggleAllSuggestions(Boolean(checked))}
+                                />
+                              </TableHead>
+                              <TableHead>Produto</TableHead>
+                              <TableHead>Preço atual</TableHead>
+                              <TableHead>Marketplace</TableHead>
+                              <TableHead>Data</TableHead>
+                              <TableHead>Tag</TableHead>
+                              <TableHead className="text-center">Olho</TableHead>
+                              <TableHead className="text-center">Editar</TableHead>
+                              <TableHead className="text-center">Lixeira</TableHead>
+                              <TableHead className="text-center">Usar</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {suggestions.map((product) => (
+                              <TableRow key={product.id}>
+                                <TableCell>
+                                  <Checkbox
+                                    checked={selectedSuggestionIds.includes(product.id)}
+                                    onCheckedChange={(checked) => handleToggleSuggestion(product.id, Boolean(checked))}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-3">
+                                    <img
+                                      src={product.thumbnail || product.images?.[0]}
+                                      alt={product.title}
+                                      className="size-10 rounded object-cover"
+                                    />
+                                    <div className="font-medium whitespace-normal max-w-[360px]">
+                                      {product.title}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">{formatBRL(product.price)}</div>
+                                    {product.oldPrice && (
+                                      <div className="text-sm text-muted-foreground line-through">
+                                        {formatBRL(product.oldPrice)}
+                                      </div>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {marketplaceLabel[product.marketplace]}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>{formatDate(product.createdAt)}</TableCell>
+                                <TableCell>
+                                  {product.tag ? (
+                                    <Badge variant="secondary" className="text-xs">
+                                      {product.tag}
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-muted-foreground text-sm">-</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleSuggestionPublish(product.id, false)}
+                                    title="Ocultar do site"
+                                    disabled={product.published === false}
+                                  >
+                                    <EyeOff className="size-4" />
+                                  </Button>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setLoc(`/admin/products/${product.id}/edit`)}
+                                    title="Editar produto"
+                                  >
+                                    <Edit className="size-4" />
+                                  </Button>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleSuggestionDelete(product.id)}
+                                    title="Excluir do banco"
+                                  >
+                                    <Trash2 className="size-4" />
+                                  </Button>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => applySuggestion(product)}
+                                  >
+                                    Usar
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      <div className="flex items-center justify-end">
+                        <Button
+                          className="rounded-full"
+                          onClick={handleBulkPublishSuggestions}
+                          disabled={selectedSuggestionIds.length === 0}
+                        >
+                          Publicar selecionados no site
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">Nenhum produto encontrado</div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Actions */}
-          <div className="flex gap-4 justify-end">
+          <div className="flex flex-wrap gap-4 justify-end">
+            {isEditing && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleRemoveFromSite}
+                  disabled={loading}
+                >
+                  <EyeOff className="size-4 mr-2" />
+                  Remover do site
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleDeleteFromDatabase}
+                  disabled={loading}
+                >
+                  <Trash2 className="size-4 mr-2" />
+                  Excluir do banco
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleDeleteBoth}
+                  disabled={loading}
+                >
+                  <XCircle className="size-4 mr-2" />
+                  Excluir do site e banco
+                </Button>
+              </>
+            )}
             <Button
               type="button"
               variant="outline"

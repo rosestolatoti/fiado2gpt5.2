@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { storage } from "../storage";
+import { isDatabaseConnected } from "../db";
 import type { InsertProduct } from "@shared/schema";
 
 // Gerar slug a partir do título
@@ -17,21 +18,31 @@ function generateSlug(title: string): string {
 // Listar produtos
 export async function getProducts(req: Request, res: Response) {
   try {
+    const storageMode = isDatabaseConnected ? "database" : "memory";
     const {
       page = 1,
       limit = 10,
       category,
       marketplace,
+      published,
       featured,
       search,
       sortBy = "created_desc"
     } = req.query;
+
+    const publishedParam = published ? String(published) : "true";
+    const publishedFilter = publishedParam === "all"
+      ? undefined
+      : publishedParam === "false"
+        ? false
+        : true;
 
     const result = await storage.getProducts({
       page: parseInt(String(page)),
       limit: parseInt(String(limit)),
       category: category ? String(category) : undefined,
       marketplace: marketplace ? String(marketplace) : undefined,
+      published: publishedFilter,
       featured: featured === "true",
       search: search ? String(search) : undefined,
       sortBy: String(sortBy)
@@ -39,6 +50,9 @@ export async function getProducts(req: Request, res: Response) {
 
     res.json({
       success: true,
+      meta: {
+        storage: storageMode
+      },
       data: {
         products: result.products,
         pagination: {
@@ -62,6 +76,7 @@ export async function getProducts(req: Request, res: Response) {
 // Obter produto por ID
 export async function getProduct(req: Request, res: Response) {
   try {
+    const storageMode = isDatabaseConnected ? "database" : "memory";
     const id = String(req.params.id);
     
     const product = await storage.getProduct(id);
@@ -75,6 +90,9 @@ export async function getProduct(req: Request, res: Response) {
 
     res.json({
       success: true,
+      meta: {
+        storage: storageMode
+      },
       data: product
     });
 
@@ -90,6 +108,7 @@ export async function getProduct(req: Request, res: Response) {
 // Criar produto
 export async function createProduct(req: Request, res: Response) {
   try {
+    const storageMode = isDatabaseConnected ? "database" : "memory";
     const productData = req.body;
     
     // Validações básicas
@@ -123,6 +142,7 @@ export async function createProduct(req: Request, res: Response) {
       brand: productData.brand || null,
       model: productData.model || null,
       availability: productData.availability || "available",
+      published: productData.published ?? false,
       featured: Boolean(productData.featured),
       slug: generateSlug(productData.title)
     };
@@ -131,6 +151,9 @@ export async function createProduct(req: Request, res: Response) {
 
     res.status(201).json({
       success: true,
+      meta: {
+        storage: storageMode
+      },
       data: newProduct,
       message: "Produto criado com sucesso"
     });
@@ -147,6 +170,7 @@ export async function createProduct(req: Request, res: Response) {
 // Atualizar produto
 export async function updateProduct(req: Request, res: Response) {
   try {
+    const storageMode = isDatabaseConnected ? "database" : "memory";
     const id = String(req.params.id);
     const updates = req.body;
 
@@ -160,15 +184,21 @@ export async function updateProduct(req: Request, res: Response) {
       });
     }
 
-    // Se o título mudou, atualizar o slug
     if (updates.title && updates.title !== existingProduct.title) {
       updates.slug = generateSlug(updates.title);
+    }
+
+    if (Array.isArray(updates.images) && (!updates.thumbnail || updates.thumbnail === "")) {
+      updates.thumbnail = updates.images[0] || "";
     }
 
     const updatedProduct = await storage.updateProduct(id, updates);
 
     res.json({
       success: true,
+      meta: {
+        storage: storageMode
+      },
       data: updatedProduct,
       message: "Produto atualizado com sucesso"
     });
@@ -185,6 +215,7 @@ export async function updateProduct(req: Request, res: Response) {
 // Excluir produto
 export async function deleteProduct(req: Request, res: Response) {
   try {
+    const storageMode = isDatabaseConnected ? "database" : "memory";
     const id = String(req.params.id);
     
     const deletedProduct = await storage.deleteProduct(id);
@@ -198,6 +229,9 @@ export async function deleteProduct(req: Request, res: Response) {
 
     res.json({
       success: true,
+      meta: {
+        storage: storageMode
+      },
       data: deletedProduct,
       message: "Produto excluído com sucesso"
     });
@@ -214,10 +248,14 @@ export async function deleteProduct(req: Request, res: Response) {
 // Obter estatísticas
 export async function getStats(req: Request, res: Response) {
   try {
+    const storageMode = isDatabaseConnected ? "database" : "memory";
     const stats = await storage.getProductStats();
 
     res.json({
       success: true,
+      meta: {
+        storage: storageMode
+      },
       data: stats
     });
 
