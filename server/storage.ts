@@ -1,6 +1,114 @@
 import { eq, desc, asc, sql } from "drizzle-orm";
 import { type User, type InsertUser, type Product, type InsertProduct, type SiteSettings, type InsertSiteSettings, users, products, siteSettings } from "@shared/schema";
-import { db } from "./db";
+import { db } from "./db.js";
+
+const seedCatalog = [
+  {
+    title: "Mochila Escolar Rodinhas + Lancheira Térmica",
+    price: 299.9,
+    oldPrice: 359.9,
+    installment: "10x sem juros",
+    rating: 4.6,
+    reviews: 528,
+    tag: "OFERTA",
+    category: "Infantil",
+    marketplace: "amazon",
+    affiliateUrl: "https://www.amazon.com.br/Mochila-Rodinhas-Lancheira-Infantil-Masculino/dp/B0CSDQPS33",
+    images: [
+      "https://m.media-amazon.com/images/I/61uZMFyYGXL._AC_SL1000_.jpg",
+      "https://m.media-amazon.com/images/I/61yKNyYRWbL._AC_SL1000_.jpg",
+      "https://m.media-amazon.com/images/I/61xztpNshUL._AC_SL1000_.jpg",
+    ],
+    video: null,
+    thumbnail: "https://m.media-amazon.com/images/I/61uZMFyYGXL._AC_SL1000_.jpg",
+    description: "Mochila com rodinhas resistente, com lancheira térmica combinando. Ideal para o dia a dia escolar.",
+    specifications: {
+      material: "Poliéster",
+      capacidade: "20L",
+      compartimentos: "3",
+      rodinhas: "Silicone reforçado",
+    },
+    brand: "Fiado",
+    model: "School Travel",
+    availability: "available",
+    published: true,
+    featured: true,
+    slug: "mochila-escolar-rodinhas-lancheira-termica",
+  },
+  {
+    title: "Kit Violino Eagle VE441 4/4 + Estojo + Arco",
+    price: 899.9,
+    oldPrice: 999.9,
+    installment: "8x sem juros",
+    rating: 4.8,
+    reviews: 214,
+    tag: "DESTAQUE",
+    category: "Outros",
+    marketplace: "shopee",
+    affiliateUrl: "https://shopee.com.br/search?keyword=violino%20eagle%20ve441",
+    images: [
+      "https://images.tcdn.com.br/img/img_prod/480495/kit_violino_eagle_ve441_4_4_estojo_estante_espaleira_afinador_1023117_1_6d2281593633a2bc86ed200575cf3b49.jpg",
+      "https://images.tcdn.com.br/img/img_prod/480495/kit_violino_eagle_ve441_4_4_estojo_estante_espaleira_afinador_1023117_2_2c5e12d7be1ba1b2d5a9ce65bc36b3b5.jpg",
+      "https://images.tcdn.com.br/img/img_prod/480495/kit_violino_eagle_ve441_4_4_estojo_estante_espaleira_afinador_1023117_3_5b57fbc1943d094fb5508fb67e4516a3.jpg",
+    ],
+    video: null,
+    thumbnail: "https://images.tcdn.com.br/img/img_prod/480495/kit_violino_eagle_ve441_4_4_estojo_estante_espaleira_afinador_1023117_1_6d2281593633a2bc86ed200575cf3b49.jpg",
+    description: "Violino tamanho 4/4 com estojo e arco. Ótimo para estudantes e músicos iniciantes.",
+    specifications: {
+      tamanho: "4/4",
+      material: "Madeira selecionada",
+      acompanha: "Estojo, arco e breu",
+    },
+    brand: "Eagle",
+    model: "VE441",
+    availability: "available",
+    published: true,
+    featured: true,
+    slug: "kit-violino-eagle-ve441-estojo-arco",
+  },
+  {
+    title: "Smart TV Box Intelbras Izy Stick Android TV 11",
+    price: 249.9,
+    oldPrice: 329.9,
+    installment: "6x sem juros",
+    rating: 4.7,
+    reviews: 892,
+    tag: "OFERTA",
+    category: "Eletrônicos",
+    marketplace: "mercadoLivre",
+    affiliateUrl: "https://produto.mercadolivre.com.br/MLB-3839607327-smart-stick-android-tv-izy-play-full-hd-portatil-intelbras-_JM",
+    images: [
+      "https://intelbras.vtexassets.com/arquivos/ids/169572/Foto-IZY-Play-Kit-Stick-.png",
+      "https://intelbras.vtexassets.com/arquivos/ids/169573/intelbras_IZY_play_09.png",
+      "https://intelbras.vtexassets.com/arquivos/ids/169574/intelbras_IZY_play_07.png",
+    ],
+    video: null,
+    thumbnail: "https://intelbras.vtexassets.com/arquivos/ids/169572/Foto-IZY-Play-Kit-Stick-.png",
+    description: "Transforme sua TV em smart com Android TV 11, Google Assistente e streaming em alta definição.",
+    specifications: {
+      sistema: "Android TV 11",
+      armazenamento: "8GB",
+      wifi: "Dual Band",
+      compatibilidade: "HDMI",
+    },
+    brand: "Intelbras",
+    model: "Izy Stick",
+    availability: "available",
+    published: true,
+    featured: true,
+    slug: "smart-tv-box-intelbras-izy-stick-android-tv-11",
+  },
+];
+
+let databaseSeeded = false;
+
+const normalizeTitle = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 
 // Interface de Storage
 export interface IStorage {
@@ -8,11 +116,13 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserPassword(id: string, password: string): Promise<User | undefined>;
   
   // Products
   getProducts(filters?: {
     category?: string;
     marketplace?: string;
+    published?: boolean;
     featured?: boolean;
     search?: string;
     sortBy?: string;
@@ -25,6 +135,7 @@ export interface IStorage {
   deleteProduct(id: string): Promise<Product | undefined>;
   getProductStats(): Promise<{
     totalProducts: number;
+    totalCatalog: number;
     featuredProducts: number;
     availableProducts: number;
     byMarketplace: Record<string, number>;
@@ -44,94 +155,42 @@ export class MemStorage implements IStorage {
   private siteSettings: SiteSettings = {
     id: "default",
     siteName: "Loja do Fiado",
-    whatsappGroupUrl: "",
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 
   constructor() {
-    // Adicionar alguns produtos iniciais para teste
     this.seedProducts();
   }
 
   private seedProducts() {
-    const initialProducts: Product[] = [
-      {
-        id: "p1",
-        title: "Smart TV 50\" 4K UHD Samsung",
-        price: 2199.90,
-        oldPrice: 2699.90,
-        installment: "10x sem juros",
-        rating: 4.7,
-        reviews: 1284,
-        tag: "OFERTA",
-        category: "Eletrônicos",
-        marketplace: "amazon",
-        affiliateUrl: "https://www.amazon.com.br/dp/B08N5KWB9H?tag=fiado20",
-        images: ["https://images.unsplash.com/photo-1598327105666-5b31ae5c5c6f?w=400"],
-        video: null,
-        thumbnail: "https://images.unsplash.com/photo-1598327105666-5b31ae5c5c6f?w=400",
-        description: null,
-        specifications: null,
-        brand: null,
-        model: null,
-        availability: "available",
-        featured: true,
-        slug: "smart-tv-50-4k-uhd-samsung",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: "p2",
-        title: "Air Fryer 5L Inox Philips",
-        price: 399.90,
-        oldPrice: 549.90,
-        installment: "6x sem juros",
-        rating: 4.8,
-        reviews: 2351,
-        tag: "DESTAQUE",
-        category: "Casa",
-        marketplace: "mercadoLivre",
-        affiliateUrl: "https://produto.mercadolivre.com.br/MLB123456790",
-        images: ["https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400"],
-        video: null,
-        thumbnail: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400",
-        description: null,
-        specifications: null,
-        brand: null,
-        model: null,
-        availability: "available",
-        featured: false,
-        slug: "air-fryer-5l-inox-philips",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: "p3",
-        title: "Kit Skincare Vitamina C L'Oréal",
-        price: 129.90,
-        oldPrice: 189.90,
-        installment: "3x sem juros",
-        rating: 4.6,
-        reviews: 842,
-        tag: "OFERTA",
-        category: "Beleza",
-        marketplace: "shopee",
-        affiliateUrl: "https://shopee.com.br/product/123456791",
-        images: ["https://images.unsplash.com/photo-1570172619644-dfd05ed296d8?w=400"],
-        video: null,
-        thumbnail: "https://images.unsplash.com/photo-1570172619644-dfd05ed296d8?w=400",
-        description: null,
-        specifications: null,
-        brand: null,
-        model: null,
-        availability: "available",
-        featured: false,
-        slug: "kit-skincare-vitamina-c-loreal",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
+    const now = new Date();
+    const initialProducts: Product[] = seedCatalog.map((product, index) => ({
+      id: `p${index + 1}`,
+      title: product.title,
+      price: product.price,
+      oldPrice: product.oldPrice ?? null,
+      installment: product.installment ?? null,
+      rating: product.rating ?? 0,
+      reviews: product.reviews ?? 0,
+      tag: product.tag ?? null,
+      category: product.category ?? "Destaques",
+      marketplace: product.marketplace,
+      affiliateUrl: product.affiliateUrl,
+      images: product.images,
+      video: product.video ?? null,
+      thumbnail: product.thumbnail ?? product.images[0] ?? "",
+      description: product.description ?? null,
+      specifications: product.specifications ?? {},
+      brand: product.brand ?? null,
+      model: product.model ?? null,
+      availability: product.availability ?? "available",
+      published: product.published ?? true,
+      featured: product.featured ?? false,
+      slug: product.slug,
+      createdAt: new Date(now.getTime() - (seedCatalog.length - index) * 1000),
+      updatedAt: now,
+    }));
 
     initialProducts.forEach(p => {
       this.productsMap.set(p.id, p);
@@ -157,9 +216,18 @@ export class MemStorage implements IStorage {
     return user;
   }
 
+  async updateUserPassword(id: string, password: string): Promise<User | undefined> {
+    const user = this.usersMap.get(id);
+    if (!user) return undefined;
+    const updated = { ...user, password };
+    this.usersMap.set(id, updated);
+    return updated;
+  }
+
   async getProducts(filters?: {
     category?: string;
     marketplace?: string;
+    published?: boolean;
     featured?: boolean;
     search?: string;
     sortBy?: string;
@@ -174,6 +242,10 @@ export class MemStorage implements IStorage {
     
     if (filters?.marketplace) {
       allProducts = allProducts.filter(p => p.marketplace === filters.marketplace);
+    }
+
+    if (filters?.published !== undefined) {
+      allProducts = allProducts.filter(p => p.published === filters.published);
     }
     
     if (filters?.featured) {
@@ -243,6 +315,7 @@ export class MemStorage implements IStorage {
       brand: insertProduct.brand ?? null,
       model: insertProduct.model ?? null,
       availability: insertProduct.availability ?? "available",
+      published: insertProduct.published ?? true,
       featured: insertProduct.featured ?? false,
       slug: insertProduct.slug,
       createdAt: now,
@@ -280,6 +353,7 @@ export class MemStorage implements IStorage {
 
   async getProductStats(): Promise<{
     totalProducts: number;
+    totalCatalog: number;
     featuredProducts: number;
     availableProducts: number;
     byMarketplace: Record<string, number>;
@@ -287,30 +361,33 @@ export class MemStorage implements IStorage {
     recentProducts: Product[];
   }> {
     const allProducts = Array.from(this.productsMap.values());
+    const publishedProducts = allProducts.filter(p => p.published);
     
-    const totalProducts = allProducts.length;
-    const featuredProducts = allProducts.filter(p => p.featured).length;
-    const availableProducts = allProducts.filter(p => p.availability === "available").length;
+    const totalProducts = publishedProducts.length;
+    const totalCatalog = new Set(allProducts.map(p => normalizeTitle(p.title))).size;
+    const featuredProducts = publishedProducts.filter(p => p.featured).length;
+    const availableProducts = publishedProducts.filter(p => p.availability === "available").length;
     
     // Count by marketplace
-    const byMarketplace = allProducts.reduce((acc: Record<string, number>, product: Product) => {
+    const byMarketplace = publishedProducts.reduce((acc: Record<string, number>, product: Product) => {
       acc[product.marketplace] = (acc[product.marketplace] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
     // Count by category
-    const byCategory = allProducts.reduce((acc: Record<string, number>, product: Product) => {
+    const byCategory = publishedProducts.reduce((acc: Record<string, number>, product: Product) => {
       acc[product.category] = (acc[product.category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
     // Recent products (last 5)
-    const recentProducts = allProducts
+    const recentProducts = publishedProducts
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5);
     
     return {
       totalProducts,
+      totalCatalog,
       featuredProducts,
       availableProducts,
       byMarketplace,
@@ -351,10 +428,20 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async updateUserPassword(id: string, password: string): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({ password })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
   // Product methods
   async getProducts(filters?: {
     category?: string;
     marketplace?: string;
+    published?: boolean;
     featured?: boolean;
     search?: string;
     sortBy?: string;
@@ -365,7 +452,40 @@ export class DatabaseStorage implements IStorage {
     const limit = filters?.limit || 10;
     const offset = (page - 1) * limit;
 
-    // Get all products first
+    if (!databaseSeeded) {
+      const existing = await db.select().from(products).limit(1);
+      if (existing.length === 0) {
+        await db.insert(products).values(
+          seedCatalog.map((product) => ({
+            title: product.title,
+            price: product.price,
+            oldPrice: product.oldPrice ?? null,
+            installment: product.installment ?? null,
+            rating: product.rating ?? 0,
+            reviews: product.reviews ?? 0,
+            tag: product.tag ?? null,
+            category: product.category ?? "Destaques",
+            marketplace: product.marketplace,
+            affiliateUrl: product.affiliateUrl,
+            images: product.images,
+            video: product.video ?? null,
+            thumbnail: product.thumbnail ?? product.images[0] ?? "",
+            description: product.description ?? null,
+            specifications: product.specifications ?? {},
+            brand: product.brand ?? null,
+            model: product.model ?? null,
+            availability: product.availability ?? "available",
+            published: product.published ?? true,
+            featured: product.featured ?? false,
+            slug: product.slug,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }))
+        );
+      }
+      databaseSeeded = true;
+    }
+
     let allProducts: Product[] = await db.select().from(products);
 
     // Apply filters in memory for simplicity
@@ -377,6 +497,10 @@ export class DatabaseStorage implements IStorage {
       allProducts = allProducts.filter((p: Product) => p.marketplace === filters.marketplace);
     }
     
+    if (filters?.published !== undefined) {
+      allProducts = allProducts.filter((p: Product) => p.published === filters.published);
+    }
+
     if (filters?.featured) {
       allProducts = allProducts.filter((p: Product) => p.featured);
     }
@@ -439,6 +563,7 @@ export class DatabaseStorage implements IStorage {
       brand: insertProduct.brand ?? null,
       model: insertProduct.model ?? null,
       availability: insertProduct.availability ?? "available",
+      published: insertProduct.published ?? true,
       featured: insertProduct.featured ?? false,
       slug: insertProduct.slug,
       createdAt: new Date(),
@@ -470,6 +595,7 @@ export class DatabaseStorage implements IStorage {
 
   async getProductStats(): Promise<{
     totalProducts: number;
+    totalCatalog: number;
     featuredProducts: number;
     availableProducts: number;
     byMarketplace: Record<string, number>;
@@ -477,30 +603,33 @@ export class DatabaseStorage implements IStorage {
     recentProducts: Product[];
   }> {
     const allProducts: Product[] = await db.select().from(products);
+    const publishedProducts = allProducts.filter(p => p.published);
     
-    const totalProducts = allProducts.length;
-    const featuredProducts = allProducts.filter(p => p.featured).length;
-    const availableProducts = allProducts.filter(p => p.availability === "available").length;
+    const totalProducts = publishedProducts.length;
+    const totalCatalog = new Set(allProducts.map(p => normalizeTitle(p.title))).size;
+    const featuredProducts = publishedProducts.filter(p => p.featured).length;
+    const availableProducts = publishedProducts.filter(p => p.availability === "available").length;
     
     // Count by marketplace
-    const byMarketplace = allProducts.reduce((acc: Record<string, number>, product: Product) => {
+    const byMarketplace = publishedProducts.reduce((acc: Record<string, number>, product: Product) => {
       acc[product.marketplace] = (acc[product.marketplace] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
     // Count by category
-    const byCategory = allProducts.reduce((acc: Record<string, number>, product: Product) => {
+    const byCategory = publishedProducts.reduce((acc: Record<string, number>, product: Product) => {
       acc[product.category] = (acc[product.category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
     // Recent products (last 5)
-    const recentProducts = allProducts
+    const recentProducts = publishedProducts
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5);
     
     return {
       totalProducts,
+      totalCatalog,
       featuredProducts,
       availableProducts,
       byMarketplace,
@@ -518,7 +647,6 @@ export class DatabaseStorage implements IStorage {
       .values({
         id: "default",
         siteName: "Loja do Fiado",
-        whatsappGroupUrl: "",
       })
       .returning();
     return created;

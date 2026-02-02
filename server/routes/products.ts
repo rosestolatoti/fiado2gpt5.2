@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { storage } from "../storage";
-import { isDatabaseConnected } from "../db";
+import { storage } from "../storage.js";
+import { isDatabaseConnected } from "../db.js";
 import type { InsertProduct } from "@shared/schema";
 
 // Gerar slug a partir do título
