@@ -63,6 +63,7 @@ export const ProductSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   featured: z.boolean(),
+  published: z.boolean().default(true),
   slug: z.string().min(1, 'Slug é obrigatório').regex(/^[a-z0-9-]+$/, 'Slug deve conter apenas letras minúsculas, números e hífens'),
 });
 

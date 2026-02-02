@@ -41,6 +41,7 @@ export interface Product {
   createdAt: string;
   updatedAt: string;
   featured: boolean;          // Produto em destaque na home
+  published: boolean;         // Produto publicado/visível
   slug: string;               // URL amigável para SEO
 }
 
@@ -187,6 +188,7 @@ export interface ProductFormData {
   affiliateUrl: string;
   availability: AvailabilityStatus;
   featured: boolean;
+  published: boolean;
   images: string[];         // URLs base64 das imagens
   video?: string;
 }
