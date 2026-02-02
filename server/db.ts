@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import * as schema from "@shared/schema";
+import * as schema from "../shared/schema.js";
 
 export let db: any = null;
 const resolveEnv = (...keys: string[]) => {
@@ -19,7 +19,7 @@ if (databaseUrl) {
   const pool = new Pool({
     connectionString: databaseUrl,
     ssl: useSsl ? { rejectUnauthorized: false } : undefined,
-    max: 10,
+    max: 2,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
   });

@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { storage } from "../storage.js";
 import { isDatabaseConnected } from "../db.js";
-import type { InsertProduct } from "@shared/schema";
+import type { InsertProduct } from "../../shared/schema.js";
 
 // Gerar slug a partir do título
 function generateSlug(title: string): string {

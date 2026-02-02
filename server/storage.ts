@@ -1,5 +1,5 @@
 import { eq, desc, asc, sql } from "drizzle-orm";
-import { type User, type InsertUser, type Product, type InsertProduct, type SiteSettings, type InsertSiteSettings, users, products, siteSettings } from "@shared/schema";
+import { type User, type InsertUser, type Product, type InsertProduct, type SiteSettings, type InsertSiteSettings, users, products, siteSettings } from "../shared/schema.js";
 import { db } from "./db.js";
 
 const seedCatalog = [
@@ -155,6 +155,7 @@ export class MemStorage implements IStorage {
   private siteSettings: SiteSettings = {
     id: "default",
     siteName: "Loja do Fiado",
+    whatsappGroupUrl: "",
     createdAt: new Date(),
     updatedAt: new Date(),
   };
