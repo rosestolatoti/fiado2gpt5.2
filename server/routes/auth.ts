@@ -1,41 +1,63 @@
-import type { Express, Request, Response } from "express";
+import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { storage } from "../storage";
-
-type AuthUser = {
-  id: string;
-  name: string;
-  email: string;
-  password: string;
-  role: "admin" | "editor";
-  permissions: string[];
-  createdAt: string;
-  lastLogin: string | null;
-};
 
 type TokenUser = {
   id: string;
   email: string;
   role: string;
   permissions: string[];
+  name: string;
+  lastLogin: string | null;
+  createdAt: string;
 };
 
-const users: AuthUser[] = [
-  {
-    id: "1",
-    name: "William Admin",
-    email: "admin@lojafiaco.com",
-    password: "$2b$10$koTJITcdsRy5Pt0xUD8AX.hvyWHKJRTH22yxvy/pFPCn1D/8hoK3C", // "Senha123!"
-    role: "admin" as const,
-    permissions: ["products:read", "products:write", "products:delete", "settings:read", "settings:write"],
-    createdAt: new Date().toISOString(),
-    lastLogin: null
+const resolveEnv = (...keys: string[]) => {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (value && value.trim()) {
+      return value.trim();
+    }
   }
-];
+  return "";
+};
 
-const JWT_SECRET = process.env.JWT_SECRET || "loja-fiado-super-secret-key-2026";
+const JWT_SECRET = resolveEnv("JWT_SECRET") || "loja-fiado-super-secret-key-2026";
 const JWT_EXPIRES_IN = "7d";
+const ADMIN_EMAIL = resolveEnv(
+  "ADMIN_EMAIL",
+  "EMAIL_DO_ADMINISTRADOR",
+  "E_MAIL_DO_ADMINISTRADOR",
+  "ADMINISTRADOR_EMAIL",
+  "EMAIL_ADMIN",
+).toLowerCase();
+const ADMIN_PASSWORD = resolveEnv(
+  "ADMIN_PASSWORD",
+  "SENHA_DE_ADMINISTRADOR",
+  "ADMINISTRADOR_SENHA",
+  "SENHA_ADMIN",
+);
+const ADMIN_NAME = resolveEnv("ADMIN_NAME", "NOME_ADMIN", "ADMIN_NOME") || "Admin";
+const ADMIN_PERMISSIONS = ["products:read", "products:write", "products:delete", "settings:read", "settings:write"];
+
+async function ensureAdminUser() {
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+    return null;
+  }
+
+  const existing = await storage.getUserByUsername(ADMIN_EMAIL);
+  if (existing) {
+    return existing;
+  }
+
+  const hashed = await bcrypt.hash(ADMIN_PASSWORD, 10);
+  const created = await storage.createUser({
+    username: ADMIN_EMAIL,
+    password: hashed,
+  });
+  return created;
+}
 
 // Middleware para validar token
 export function authenticateToken(req: Request, res: Response, next: any) {
@@ -75,8 +97,24 @@ export async function login(req: Request, res: Response) {
       });
     }
 
-    // Buscar usuário
-    const user = users.find(u => u.email === email);
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+      return res.status(500).json({
+        success: false,
+        error: "Admin não configurado"
+      });
+    }
+
+    if (normalizedEmail !== ADMIN_EMAIL) {
+      return res.status(401).json({
+        success: false,
+        error: "Email ou senha incorretos"
+      });
+    }
+
+    await ensureAdminUser();
+    const user = await storage.getUserByUsername(normalizedEmail);
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -93,16 +131,19 @@ export async function login(req: Request, res: Response) {
       });
     }
 
-    // Atualizar último login
-    user.lastLogin = new Date().toISOString();
+    const lastLogin = new Date().toISOString();
+    const createdAt = new Date().toISOString();
 
     // Gerar token
     const token = jwt.sign(
       { 
         id: user.id, 
-        email: user.email, 
-        role: user.role,
-        permissions: user.permissions 
+        email: normalizedEmail, 
+        role: "admin",
+        permissions: ADMIN_PERMISSIONS,
+        name: ADMIN_NAME,
+        lastLogin,
+        createdAt
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
@@ -113,11 +154,11 @@ export async function login(req: Request, res: Response) {
       data: {
         user: {
           id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          permissions: user.permissions,
-          lastLogin: user.lastLogin
+          name: ADMIN_NAME,
+          email: normalizedEmail,
+          role: "admin",
+          permissions: ADMIN_PERMISSIONS,
+          lastLogin
         },
         token
       }
@@ -165,8 +206,7 @@ export async function updatePassword(req: Request, res: Response) {
       });
     }
 
-    // Buscar usuário
-    const user = users.find(u => u.id === userId);
+    const user = await storage.getUser(userId);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -185,7 +225,7 @@ export async function updatePassword(req: Request, res: Response) {
 
     // Hash da nova senha
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedNewPassword;
+    await storage.updateUserPassword(user.id, hashedNewPassword);
 
     res.json({
       success: true,

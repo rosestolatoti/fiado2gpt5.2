@@ -42,9 +42,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      const rawText = await response.text();
+      if (!rawText) {
+        throw new Error(`Resposta vazia do servidor (${response.status})`);
+      }
+      if (!contentType.includes("application/json")) {
+        throw new Error(`Resposta inválida do servidor (${response.status})`);
+      }
+      let data: any;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error("Resposta inválida do servidor");
+      }
 
-      if (data.success) {
+      if (!response.ok) {
+        throw new Error(data?.error || "Erro no login");
+      }
+
+      if (data?.success) {
         const userData = data.data.user;
         const token = data.data.token;
 

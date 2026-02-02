@@ -3,7 +3,16 @@ import { Pool } from "pg";
 import * as schema from "@shared/schema";
 
 export let db: any = null;
-const databaseUrl = process.env.DATABASE_URL?.trim();
+const resolveEnv = (...keys: string[]) => {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (value && value.trim()) {
+      return value.trim();
+    }
+  }
+  return "";
+};
+const databaseUrl = resolveEnv("DATABASE_URL", "URL_DO_BANCO_DE_DADOS", "DATABASEURL");
 
 if (databaseUrl) {
   const useSsl = databaseUrl.includes("supabase.co");
