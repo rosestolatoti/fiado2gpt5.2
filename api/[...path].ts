@@ -1,7 +1,7 @@
 import express from "express";
 import { createServer } from "http";
 import type { IncomingMessage, ServerResponse } from "http";
-import { registerRoutes } from "../server/routes";
+import { registerRoutes } from "../server/routes.js";
 
 const app = express();
 const httpServer = createServer(app);
