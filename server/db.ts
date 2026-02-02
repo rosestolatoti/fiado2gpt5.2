@@ -2,15 +2,21 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "@shared/schema";
 
-let db: any = null;
+export let db: any = null;
+const databaseUrl = process.env.DATABASE_URL?.trim();
 
-if (process.env.DATABASE_URL) {
+if (databaseUrl) {
+  const useSsl = databaseUrl.includes("supabase.co");
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: databaseUrl,
+    ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
   });
   db = drizzle(pool, { schema });
 } else {
   console.warn("⚠️  DATABASE_URL não definida. Usando armazenamento em memória para desenvolvimento.");
 }
 
-export { db };
+export const isDatabaseConnected = Boolean(db);
