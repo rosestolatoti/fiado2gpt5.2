@@ -39,6 +39,7 @@ export const products = pgTable("products", {
   model: text("model"),
   availability: text("availability").notNull().default("available"),
   featured: boolean("featured").notNull().default(false),
+  published: boolean("published").notNull().default(true),
   slug: text("slug").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`now()`),
