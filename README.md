@@ -493,4 +493,4 @@ Este projeto está licenciado sob a licença MIT.
 
 <p align="center">
   <strong>Loja do Fiado</strong> - Ofertas rápidas. Compra fácil.
-</p>
+</p># Deploy Mon, Feb  2, 2026  7:00:33 PM
