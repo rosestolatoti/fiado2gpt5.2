@@ -53,6 +53,7 @@ const MOCK_PRODUCTS: Product[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     featured: true,
+    published: true,
     slug: "smart-tv-50-4k-uhd-samsung"
   },
   {
@@ -75,6 +76,7 @@ const MOCK_PRODUCTS: Product[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     featured: false,
+    published: true,
     slug: "air-fryer-5l-inox-philips"
   },
   {
@@ -97,6 +99,7 @@ const MOCK_PRODUCTS: Product[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     featured: false,
+    published: true,
     slug: "kit-skincare-vitamina-c-loreal"
   },
   {
@@ -119,6 +122,7 @@ const MOCK_PRODUCTS: Product[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     featured: false,
+    published: true,
     slug: "tenis-casual-premium-nike"
   },
   {
@@ -141,6 +145,7 @@ const MOCK_PRODUCTS: Product[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     featured: false,
+    published: true,
     slug: "cesta-mercado-premium"
   },
   {
@@ -163,6 +168,7 @@ const MOCK_PRODUCTS: Product[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     featured: false,
+    published: true,
     slug: "furadeira-maleta-500w-bosch"
   },
   {
@@ -185,6 +191,7 @@ const MOCK_PRODUCTS: Product[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     featured: false,
+    published: true,
     slug: "jogo-de-cama-queen-4-pecas"
   },
   {
@@ -208,6 +215,7 @@ const MOCK_PRODUCTS: Product[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     featured: true,
+    published: true,
     slug: "fone-bluetooth-anc-sony"
   },
 ];

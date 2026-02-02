@@ -71,6 +71,7 @@ export default function ProductForm() {
     affiliateUrl: "",
     availability: "available",
     featured: false,
+    published: true,
     images: [],
     video: ""
   });
@@ -166,6 +167,7 @@ export default function ProductForm() {
           affiliateUrl: product.affiliateUrl,
           availability: product.availability,
           featured: product.featured,
+          published: product.published ?? true,
           images: product.images || [],
           video: product.video || ""
         });
@@ -311,6 +313,7 @@ export default function ProductForm() {
       affiliateUrl: product.affiliateUrl,
       availability: product.availability,
       featured: product.featured,
+      published: product.published ?? true,
       images: product.images || [],
       video: product.video || ""
     });
